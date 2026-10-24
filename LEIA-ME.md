@@ -18,6 +18,6 @@ A versão online antiga é independente. Instalar este aplicativo não apaga nem
 
 ## Encerrar e desenvolver
 
-Fechar o navegador mantém o aplicativo local disponível. Use **Encerrar Dia a dia** no menu Iniciar para desligá-lo; abrir o atalho inicia novamente. Não há inicialização automática com Windows.
+Ao fechar a última aba do aplicativo, o servidor local encerra em cerca de 8 segundos. Se o navegador for encerrado sem avisar, o servidor encerra após cerca de 90 segundos sem resposta. Abrir o atalho inicia novamente. Você também pode usar **Encerrar Dia a dia** no menu Iniciar. Não há inicialização automática com Windows.
 
 Fontes sem dependências: `npm start` ou `node server/local.mjs`. Testes: `npm test` com Node.js 24. Para testes isolados, configure `DIA_A_DIA_DATA_DIR` e `DIA_A_DIA_PORT`.

@@ -57,7 +57,7 @@ Configurações opcionais:
 | `DIA_A_DIA_DATA_DIR` | Pasta alternativa para o banco e as imagens |
 | `DIA_A_DIA_PORT` | Porta local, padrão `43127` |
 
-O atalho do Windows utiliza a pasta e a porta padrão. As variáveis são destinadas à execução pelo terminal.
+O atalho do Windows utiliza a pasta e a porta padrão. As variáveis são destinadas à execução pelo terminal. O servidor local encerra cerca de 8 segundos depois que a última aba do aplicativo é fechada; se o navegador terminar sem avisar, encerra após cerca de 90 segundos. Abrir o atalho novamente inicia o servidor.
 
 ### Estrutura
 

@@ -54,3 +54,42 @@ test('Servidor local rejeita sites externos, Host adulterado e acesso a arquivos
   assert.equal((await fetch(app.origin + '/api/local/stop', { method: 'POST' })).status, 403);
   assert.equal((await fetch(app.origin + '/api/local/health')).status, 200);
 });
+
+test('Servidor encerra após a última aba e preserva outra aba aberta', async t => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'daily-presence-test-'));
+  const app = await startLocal({ dataDir, port: 0, presence: { startupMs: 200, releaseMs: 150, staleMs: 2000, requestGraceMs: 0, checkMs: 30 } });
+  t.after(async () => { await app.close(); await rm(dataDir, { recursive: true, force: true }); });
+  const first = crypto.randomUUID(), second = crypto.randomUUID();
+  async function signal(action, id) {
+    const response = await fetch(app.origin + '/api/local/' + action + '?id=' + id, { method: 'POST' });
+    assert.equal(response.status, 204);
+  }
+  await signal('heartbeat', first);
+  await signal('heartbeat', second);
+  await signal('release', first);
+  await new Promise(resolve => setTimeout(resolve, 280));
+  assert.equal((await fetch(app.origin + '/api/local/health')).status, 200);
+  await signal('release', second);
+  const until = Date.now() + 1500;
+  while (Date.now() < until) {
+    try { await fetch(app.origin + '/api/local/health'); }
+    catch { return; }
+    await new Promise(resolve => setTimeout(resolve, 40));
+  }
+  assert.fail('O servidor permaneceu ativo após fechar a última aba.');
+});
+
+test('Servidor encerra se o navegador termina sem enviar o aviso de fechamento', async t => {
+  const dataDir = await mkdtemp(join(tmpdir(), 'daily-stale-test-'));
+  const app = await startLocal({ dataDir, port: 0, presence: { startupMs: 200, releaseMs: 100, staleMs: 150, requestGraceMs: 0, checkMs: 25 } });
+  t.after(async () => { await app.close(); await rm(dataDir, { recursive: true, force: true }); });
+  const response = await fetch(app.origin + '/api/local/heartbeat?id=' + crypto.randomUUID(), { method: 'POST' });
+  assert.equal(response.status, 204);
+  const until = Date.now() + 1500;
+  while (Date.now() < until) {
+    try { await fetch(app.origin + '/api/local/health'); }
+    catch { return; }
+    await new Promise(resolve => setTimeout(resolve, 40));
+  }
+  assert.fail('O servidor permaneceu ativo sem resposta do navegador.');
+});
