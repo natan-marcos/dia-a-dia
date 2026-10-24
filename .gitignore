@@ -1,0 +1,37 @@
+# Runtime and generated output
+node_modules/
+runtime/
+dist/
+coverage/
+*.exe
+*.dll
+*.log
+*.tmp
+
+# Personal data, images and exports (never version these)
+data/
+dados/
+imagens/
+backups/
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+controle-local.txt
+dia-a-dia-backup-*.json
+*.zip
+*.tar.gz
+
+# Credentials and machine-specific files
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
