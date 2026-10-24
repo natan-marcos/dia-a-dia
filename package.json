@@ -1,0 +1,11 @@
+{
+  "name": "dia-a-dia-local",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "start": "node server/local.mjs",
+    "test": "node --test tests/*.test.*"
+  }
+}

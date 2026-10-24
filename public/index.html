@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f0">
+  <meta name="description" content="Suas dailys e pendências em um só lugar. Um espaço simples para organizar o dia.">
+  <title>Dia a dia</title>
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=blue1">
+  <link rel="stylesheet" href="styles.css?v=blue1">
+  <script src="core.js?v=sqlite1" defer></script><script src="sync.js?v=local1" defer></script>
+  <script src="app.js?v=local1" defer></script>
+  <script src="reference-crypto.js?v=1" defer></script>
+  <script src="references.js?v=1" defer></script>
+</head>
+<body>
+  <svg class="svg-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.2A8.7 8.7 0 0 1 9.8 3.5a8.7 8.7 0 1 0 10.7 10.7Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 4v7h7m2-5v6l4 2"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m-5 5 5-5 5 5M4 16v4h16v-4"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m15 4 5 5M4 20l5-1L21 7a2 2 0 0 0-4-4L5 15z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-13 5h2m4 0h2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2"/></symbol>
+  </svg>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" id="brand-home" aria-label="Dia a dia, voltar para hoje"><span class="brand-mark"><svg><use href="#i-sun"/></svg></span><span>dia a dia<span class="brand-dot">.</span></span></a>
+      <div class="top-actions"><div class="theme-switch" role="group" aria-label="Tema"><button type="button" data-theme-choice="light" aria-label="Tema claro" title="Tema claro" aria-pressed="true" disabled><svg><use href="#i-sun"/></svg><span>Claro</span></button><button type="button" data-theme-choice="dark" aria-label="Tema escuro" title="Tema escuro" aria-pressed="false" disabled><svg><use href="#i-moon"/></svg><span>Escuro</span></button></div><button class="button quiet" id="backup-open"><svg><use href="#i-download"/></svg><span>Meus dados</span></button></div>
+    </header>
+    <main>
+      <nav class="view-tabs" role="tablist" aria-label="Área do aplicativo"><button id="tab-daily" role="tab" aria-controls="daily-view" aria-selected="true">Meu dia</button><button id="tab-references" role="tab" aria-controls="references-view" aria-selected="false" tabindex="-1">Referências</button></nav>
+      <div id="storage-warning" class="warning" role="alert" hidden><span id="warning-text"></span><div class="warning-actions"><button class="button" id="retry-save">Tentar novamente</button><button class="button" id="resolve-conflict" hidden>Baixar rascunho e atualizar</button></div></div><div id="legacy-banner" class="warning" hidden><span id="legacy-message"></span><div class="warning-actions"><button class="button" id="transfer-legacy">Transferir anotações antigas</button></div></div>
+      <div id="daily-view" role="tabpanel" aria-labelledby="tab-daily"><section class="intro" aria-labelledby="page-title">
+        <h1 id="page-title">Meu dia</h1>
+        <div class="today-label"><svg><use href="#i-calendar"/></svg><div><span id="today-weekday"></span><strong id="today-long"></strong></div></div>
+      </section>
+      <section class="overview" aria-label="Resumo das tarefas">
+        <div class="overview-item"><span class="stat-icon neutral"><svg><use href="#i-note"/></svg></span><strong id="stat-open">0</strong><span>pendentes</span></div>
+        <div class="overview-item"><span class="stat-icon accent"><svg><use href="#i-flag"/></svg></span><strong id="stat-priority">0</strong><span>prioridades</span></div>
+        <div class="overview-item"><span class="stat-icon green"><svg><use href="#i-check"/></svg></span><strong id="stat-done">0</strong><span>concluídas hoje</span></div>
+
+      </section>
+      <div class="workspace">
+        <section class="panel daily-panel" aria-labelledby="daily-title">
+          <div class="panel-heading"><div class="heading-group"><span class="section-icon"><svg><use href="#i-note"/></svg></span><div><h2 id="daily-title">Minha daily</h2></div></div><button class="icon-button" id="history-open" title="Ver histórico de dailys" aria-label="Ver histórico de dailys"><svg><use href="#i-history"/></svg></button></div>
+          <div class="date-toolbar"><div class="day-controls"><button class="icon-button small" id="previous-day" aria-label="Dia anterior"><svg class="reverse"><use href="#i-arrow"/></svg></button><label class="date-label"><span id="selected-date-label"></span><input type="date" id="daily-date" aria-label="Data da daily" min="2000-01-01" max="2100-12-31"></label><button class="icon-button small" id="next-day" aria-label="Próximo dia"><svg><use href="#i-arrow"/></svg></button><button class="today-button" id="go-today">Hoje</button></div><span id="date-badge" class="date-badge">HOJE</span></div>
+          <div class="note-toolbar"><button class="text-button" id="use-template"><svg><use href="#i-plus"/></svg>Inserir roteiro</button></div>
+          <div class="notebook"><textarea id="daily-notes" aria-label="Anotações da daily" spellcheck="true" placeholder="Anote sua daily…"></textarea></div>
+          <div class="note-footer"><span class="save-state" id="save-state" role="status"><span class="saved-dot"></span>Carregando suas anotações…</span><button class="text-button" id="copy-daily"><svg><use href="#i-copy"/></svg>Copiar daily</button></div>
+
+        </section>
+        <section class="panel tasks-panel" aria-labelledby="tasks-title">
+          <div class="panel-heading"><div class="heading-group"><span class="section-icon"><svg><use href="#i-check"/></svg></span><div><h2 id="tasks-title">Minhas pendências <span id="pending-count" class="count-pill">0</span></h2></div></div><span class="keyboard-hint" title="Pressione N para adicionar uma tarefa">N</span></div>
+          <form id="task-form" class="quick-add"><svg><use href="#i-plus"/></svg><input id="new-task" autocomplete="off" maxlength="500" placeholder="Nova pendência" aria-label="Nova pendência" required><button class="add-button" type="submit" aria-label="Adicionar pendência"><svg><use href="#i-arrow"/></svg></button></form>
+          <div class="task-toolbar"><div class="tabs" role="group" aria-label="Filtrar tarefas"><button class="tab active" id="filter-open" data-filter="open" aria-pressed="true">Pendentes <span id="tab-open-count">0</span></button><button class="tab" id="filter-done" data-filter="done" aria-pressed="false">Concluídas <span id="tab-done-count">0</span></button></div><button class="icon-button small" id="search-toggle" aria-label="Buscar pendência" aria-expanded="false"><svg><use href="#i-search"/></svg></button></div>
+          <div class="search-box" id="search-box" hidden><svg><use href="#i-search"/></svg><input type="search" id="task-search" placeholder="Buscar nas pendências…" aria-label="Buscar nas pendências"></div>
+          <div id="task-list" class="task-list" aria-label="Lista de pendências"></div>
+          <div class="empty-state" id="empty-state"><div class="empty-illustration"><div class="paper back"></div><div class="paper front"><span class="paper-check"><svg><use href="#i-check"/></svg></span><i></i><i></i><i></i></div><span class="spark spark-one">✳</span><span class="spark spark-two">+</span></div><h3 id="empty-title">Nenhuma pendência</h3><p id="empty-description"></p><button class="text-button" id="empty-add"><svg><use href="#i-plus"/></svg>Adicionar pendência</button></div>
+          <div class="progress-footer"><div><span id="progress-label">Progresso de hoje</span><strong id="progress-detail">0 tarefas</strong></div><div class="progress-track" role="progressbar" aria-label="Tarefas concluídas hoje" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-track"><span id="progress-fill"></span></div></div>
+        </section>
+      </div>
+
+      </div>
+      <section id="references-view" role="tabpanel" aria-labelledby="tab-references" hidden>
+        <div class="refs-heading"><h1>Referências</h1><button class="button" id="ref-lock" hidden><svg><use href="#i-lock"/></svg>Bloquear</button></div>
+        <div id="ref-alert" class="warning" role="alert" hidden></div>
+        <div id="ref-unlock-panel" class="panel ref-unlock">
+          <span class="section-icon"><svg><use href="#i-lock"/></svg></span><h2 id="ref-unlock-title">Carregando…</h2>
+          <p id="ref-unlock-description">Anotações, senhas, códigos, configurações e imagens.</p>
+          <form id="ref-unlock-form" hidden><label class="form-label" for="ref-master">Senha mestra</label><input type="password" id="ref-master" required autocomplete="current-password" maxlength="256"><div id="ref-confirm-group" hidden><label class="form-label" for="ref-master-confirm">Confirmar senha mestra</label><input type="password" id="ref-master-confirm" autocomplete="new-password" maxlength="256"><p class="ref-help">Use pelo menos 12 caracteres. Guarde esta senha: sem ela, não será possível abrir suas referências.</p></div><button class="button primary" id="ref-unlock-submit" type="submit">Desbloquear</button></form>
+          <button class="button" id="ref-load-retry" hidden>Tentar novamente</button>
+        </div>
+        <div id="ref-workspace" class="ref-workspace" hidden>
+          <aside class="panel ref-sidebar" aria-label="Lista de referências"><button class="button primary" id="ref-new"><svg><use href="#i-plus"/></svg>Nova referência</button><input type="search" id="ref-search" placeholder="Buscar referências" aria-label="Buscar referências"><select id="ref-filter" aria-label="Filtrar referências"><option value="all">Todas</option><option value="note">Anotações</option><option value="password">Senhas</option><option value="code">Códigos</option><option value="config">Configurações</option><option value="image">Imagens</option><option value="archived">Arquivadas</option></select><div id="ref-list" class="ref-list"></div></aside>
+          <section class="panel ref-detail"><div id="ref-empty" class="ref-empty">Selecione uma referência ou crie uma.</div>
+            <form id="ref-editor" hidden><fieldset id="ref-fields"><div class="ref-form-row"><div class="ref-title-field"><label class="form-label" for="ref-title">Título</label><input id="ref-title" required maxlength="150" autocomplete="off" placeholder="Ex.: Acesso ao sistema / web.config"></div><div><label class="form-label" for="ref-kind">Tipo</label><select id="ref-kind"><option value="note">Anotação</option><option value="password">Senha</option><option value="code">Código</option><option value="config">Configuração</option><option value="image">Imagem</option></select></div></div>
+              <div id="ref-credentials" hidden><div class="ref-form-row"><div><label class="form-label" for="ref-username">Usuário / e-mail</label><input id="ref-username" autocomplete="off" maxlength="500"></div><div><label class="form-label" for="ref-url">Endereço</label><input id="ref-url" autocomplete="off" maxlength="2000" placeholder="https://…"></div></div><label class="form-label" for="ref-password">Senha / código de acesso</label><div class="ref-password-row"><input type="password" id="ref-password" autocomplete="new-password" maxlength="4000"><button class="button" id="ref-show-password" type="button" aria-pressed="false">Mostrar</button><button class="button" id="ref-copy-password" type="button">Copiar</button></div></div>
+              <div id="ref-code-tools" class="ref-code-tools" hidden><label for="ref-language">Formato</label><select id="ref-language"><option value="text">Texto</option><option value="xml">XML / web.config</option><option value="json">JSON</option><option value="yaml">YAML</option><option value="ini">INI</option><option value="sql">SQL</option><option value="js">JavaScript</option><option value="cs">C#</option><option value="ps1">PowerShell</option></select><button type="button" class="button" id="ref-import-code">Importar arquivo</button></div>
+              <div id="ref-image-tools" class="ref-image-tools" hidden><button type="button" class="ref-dropzone" id="ref-image-choose">Adicionar imagem ou colar com Ctrl+V<br><small>PNG, JPG, WEBP ou GIF · até 8 MB</small></button><img id="ref-image-preview" alt="Imagem da referência" hidden><div class="ref-image-actions"><span id="ref-image-name"></span><button type="button" class="text-button" id="ref-download-image" hidden>Baixar imagem</button></div></div>
+              <div class="ref-content-heading"><label class="form-label" for="ref-content" id="ref-content-label">Anotações</label><button type="button" class="text-button" id="ref-copy-content"><svg><use href="#i-copy"/></svg>Copiar</button></div><textarea id="ref-content" rows="13" spellcheck="true" placeholder="Escreva aqui…"></textarea>
+            </fieldset><div class="ref-editor-footer"><span id="ref-save-status" role="status"></span><div><button class="text-button" id="ref-archive" type="button" hidden>Arquivar</button><button class="button" id="ref-save-copy" type="button" hidden>Salvar como cópia</button><button class="button primary" id="ref-save" type="submit">Salvar</button></div></div></form>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" hidden><span id="toast-message"></span><button id="toast-undo" hidden>Desfazer</button><button class="icon-button small" id="toast-close" aria-label="Fechar aviso"><svg><use href="#i-close"/></svg></button></div>
+  <dialog id="history-dialog"><div class="dialog-head"><div><h2>Histórico de dailys</h2></div><button class="icon-button" data-close aria-label="Fechar histórico"><svg><use href="#i-close"/></svg></button></div><p class="dialog-description">Selecione uma data.</p><div id="history-list" class="history-list"></div></dialog>
+  <dialog id="data-dialog"><div class="dialog-head"><div><h2>Meus dados</h2></div><button class="icon-button" data-close aria-label="Fechar meus dados"><svg><use href="#i-close"/></svg></button></div><p class="dialog-description">Dados salvos neste computador.</p><div class="data-actions"><button class="data-action" id="export-backup"><span class="action-icon"><svg><use href="#i-download"/></svg></span><span><strong>Baixar backup</strong><small>Guarde todas as dailys e pendências em um arquivo.</small></span><svg><use href="#i-arrow"/></svg></button><button class="data-action" id="import-backup"><span class="action-icon"><svg><use href="#i-upload"/></svg></span><span><strong>Restaurar um backup</strong><small>Adicione os dados de um backup sem apagar os atuais.</small></span><svg><use href="#i-arrow"/></svg></button><button class="data-action" id="import-text"><span class="action-icon"><svg><use href="#i-note"/></svg></span><span><strong>Trazer do bloco de notas</strong><small>Importe um arquivo TXT para a daily selecionada.</small></span><svg><use href="#i-arrow"/></svg></button></div><p class="data-footnote">Funciona sem internet.</p></dialog>
+  <dialog id="import-dialog"><div class="dialog-head"><div><h2>Importar anotações</h2></div><button class="icon-button" data-close aria-label="Fechar importação"><svg><use href="#i-close"/></svg></button></div><p id="import-description" class="dialog-description"></p><textarea id="import-preview" class="import-preview" aria-label="Prévia editável do texto importado"></textarea><div class="dialog-actions"><button class="button" data-close>Cancelar</button><button class="button primary" id="confirm-import">Acrescentar à daily</button></div></dialog>
+  <dialog id="edit-dialog"><form id="edit-form"><div class="dialog-head"><div><h2>Editar pendência</h2></div><button type="button" class="icon-button" data-close aria-label="Fechar edição"><svg><use href="#i-close"/></svg></button></div><label class="form-label" for="edit-title">Tarefa</label><textarea id="edit-title" class="edit-title" required maxlength="500" rows="3"></textarea><div class="form-row"><div><label class="form-label" for="edit-priority">Prioridade</label><select id="edit-priority"><option value="normal">Normal</option><option value="high">Prioridade alta</option></select></div><div><label class="form-label" for="edit-due">Prazo <span>(opcional)</span></label><input type="date" id="edit-due" min="2000-01-01" max="2100-12-31"></div></div><div class="dialog-actions"><button type="button" class="button" data-close>Cancelar</button><button type="submit" class="button primary">Salvar alterações</button></div></form></dialog>
+  <input id="backup-file" type="file" accept=".json,application/json" hidden><input id="text-file" type="file" accept=".txt,text/plain" hidden>
+  <input id="ref-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden><input id="ref-code-file" type="file" accept=".txt,.config,.xml,.json,.yaml,.yml,.ini,.sql,.js,.cs,.ps1,.log,.env" hidden>
+</body>
+</html>
