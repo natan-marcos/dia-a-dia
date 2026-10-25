@@ -21,12 +21,14 @@ foreach ($folder in @($desktop, $menu)) {
   $shortcut.Arguments = '"' + (Join-Path $destination 'Abrir Dia a dia.vbs') + '"'
   $shortcut.WorkingDirectory = $destination
   $shortcut.Description = 'Dailys e referencias locais'
+  $shortcut.IconLocation = (Join-Path $destination 'public\app-icon.ico') + ',0'
   $shortcut.Save()
 }
 $stop = $shell.CreateShortcut((Join-Path $menu 'Encerrar Dia a dia.lnk'))
 $stop.TargetPath = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $stop.Arguments = '-NoProfile -WindowStyle Hidden -File "' + (Join-Path $destination 'Abrir.ps1') + '" -Stop'
 $stop.WindowStyle = 7
+$stop.IconLocation = (Join-Path $destination 'public\app-icon.ico') + ',0'
 $stop.Save()
 Write-Output "Instalado em $destination"
 Write-Output "Atalho criado em $desktop"

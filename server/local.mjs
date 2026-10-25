@@ -12,7 +12,8 @@ export const DEFAULT_PORT = 43127;
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']], ['/index.html', ['index.html', 'text/html; charset=utf-8']],
   ...['app.js', 'core.js', 'sync.js', 'references.js', 'reference-crypto.js', 'presence.js'].map(name => ['/' + name, [name, 'text/javascript; charset=utf-8']]),
-  ['/styles.css', ['styles.css', 'text/css; charset=utf-8']], ['/icon.svg', ['icon.svg', 'image/svg+xml']]
+  ['/styles.css', ['styles.css', 'text/css; charset=utf-8']], ['/icon.svg', ['icon.svg', 'image/svg+xml']],
+  ['/app-icon.png', ['app-icon.png', 'image/png']], ['/app-icon.ico', ['app-icon.ico', 'image/x-icon']]
 ]);
 export async function startLocal({ dataDir = join(process.env.LOCALAPPDATA || homedir(), 'DiaADia'), port = DEFAULT_PORT, presence = {} } = {}) {
   const db = await openDatabase(dataDir), images = localImages(dataDir), stopToken = crypto.randomUUID();
