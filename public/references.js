@@ -2,7 +2,7 @@
   'use strict';
   const $ = id => document.getElementById(id), V = window.ReferenceCrypto;
   const names = { note: 'Anotação', password: 'Senha', code: 'Código', config: 'Configuração', image: 'Imagem' };
-  let key = null, config = null, items = [], current = null, pending = null, imageData = null, imageUrl = null;
+  let key = null, config = null, items = [], current = null, pending = null, imageCollection = null;
   let dirty = false, busy = false, loading = false, generation = 0, lastActivity = Date.now();
   function alert(message = '') { $('ref-alert').textContent = message; $('ref-alert').hidden = !message; }
   function markDirty() { dirty = true; $('ref-save-status').textContent = 'Não salvo'; lastActivity = Date.now(); }
@@ -64,11 +64,18 @@
     } catch (error) { alert(error.message); $('ref-load-retry').hidden = false; }
     finally { busy = false; $('ref-unlock-submit').disabled = false; }
   };
-  function revokeImage() { if (imageUrl) URL.revokeObjectURL(imageUrl); imageUrl = null; $('ref-image-preview').removeAttribute('src'); $('ref-image-preview').hidden = true; }
+  function clearImages() {
+    imageCollection?.close(); imageCollection = null;
+    $('ref-image-gallery').replaceChildren();
+    $('ref-image-dialog').close(); $('ref-image-full').removeAttribute('src');
+  }
+  function resetImages(metadata = []) {
+    clearImages(); imageCollection = window.ReferenceImages.create({ key, fetcher: api }); imageCollection.restore(metadata);
+  }
   function lock() {
     if (busy) return;
     if (dirty) { alert('Salve suas alterações antes de bloquear.'); return; }
-    generation++; key = null; items = []; current = null; pending = null; imageData = null; config = null; revokeImage();
+    generation++; clearImages(); key = null; items = []; current = null; pending = null; config = null;
     $('ref-editor').reset(); $('ref-editor').hidden = true; $('ref-list').replaceChildren(); $('ref-search').value = ''; $('ref-empty').hidden = false;
     $('ref-workspace').hidden = true; $('ref-lock').hidden = true; $('ref-unlock-panel').hidden = false; alert(); loadConfig();
   }
@@ -87,13 +94,13 @@
   }
   $('ref-search').oninput = renderList; $('ref-filter').onchange = renderList;
   function canLeave() { return !busy && (!dirty || confirm('Há alterações não salvas. Descartar essas alterações?')); }
-  function blank(kind = 'note') { return { title: '', kind, content: '', username: '', password: '', url: '', language: kind === 'config' ? 'xml' : 'text', image: null, archived: false }; }
+  function blank(kind = 'note') { return { title: '', kind, content: '', username: '', password: '', url: '', language: kind === 'config' ? 'xml' : 'text', images: [], archived: false }; }
   function fields() {
-    return V.validateItem({ title: $('ref-title').value.trim(), kind: $('ref-kind').value, content: $('ref-content').value, username: $('ref-username').value, password: $('ref-password').value, url: $('ref-url').value, language: $('ref-language').value, image: imageData ? imageData.meta : null, archived: current?.data.archived || false });
+    return V.validateItem({ title: $('ref-title').value.trim(), kind: $('ref-kind').value, content: $('ref-content').value, username: $('ref-username').value, password: $('ref-password').value, url: $('ref-url').value, language: $('ref-language').value, images: imageCollection?.metadata() || [], archived: current?.data.archived || false });
   }
   function changeKind() {
     const kind = $('ref-kind').value;
-    $('ref-credentials').hidden = kind !== 'password'; $('ref-code-tools').hidden = !['code', 'config'].includes(kind); $('ref-image-tools').hidden = kind !== 'image';
+    $('ref-credentials').hidden = kind !== 'password'; $('ref-code-tools').hidden = !['code', 'config'].includes(kind);
     $('ref-content').classList.toggle('code-editor', ['code', 'config'].includes(kind)); $('ref-content').spellcheck = !['code', 'config'].includes(kind);
     $('ref-content-label').textContent = ({ code: 'Código', config: 'Configuração', image: 'Legenda / anotações' })[kind] || 'Anotações';
   }
@@ -103,11 +110,11 @@
     $('ref-password').type = 'password'; $('ref-show-password').textContent = 'Mostrar'; $('ref-show-password').setAttribute('aria-pressed', 'false');
     $('ref-archive').hidden = !current?.revision; $('ref-archive').textContent = data.archived ? 'Restaurar' : 'Arquivar';
     $('ref-save-copy').hidden = true; $('ref-save-status').textContent = current?.revision ? 'Salvo' : 'Nova referência'; changeKind();
-    $('ref-image-name').textContent = data.image?.name || ''; $('ref-download-image').hidden = !data.image;
+    renderImages();
   }
   $('ref-new').onclick = () => {
     if (!key || !canLeave()) return;
-    generation++; pending = null; dirty = false; imageData = null; revokeImage(); alert();
+    generation++; pending = null; dirty = false; resetImages(); alert();
     current = { id: crypto.randomUUID(), revision: 0, data: blank() }; fill(current.data); renderList(); $('ref-title').focus();
   };
   async function selectItem(item) {
@@ -117,53 +124,78 @@
       const stored = await json('GET', undefined, '?id=' + encodeURIComponent(item.id));
       const data = V.validateItem(await V.open(key, stored.envelope, 'item:' + item.id));
       if (operation !== generation || !key) return;
-      current = { id: item.id, revision: stored.revision, data }; pending = null; dirty = false; imageData = data.image ? { meta: data.image, uploaded: true } : null;
-      revokeImage(); fill(data); renderList();
-      $('ref-image-name').textContent = data.image?.name || ''; $('ref-download-image').hidden = !data.image;
-      if (data.image && data.kind === 'image') await loadImage(operation);
+      current = { id: item.id, revision: stored.revision, data }; pending = null; dirty = false;
+      resetImages(V.imagesOf(data)); fill(data); renderList();
     } catch (error) { alert(error.message); }
     finally { busy = false; $('ref-fields').disabled = false; }
   }
-  async function loadImage(operation = generation) {
-    if (!imageData) return;
-    const meta = imageData.meta;
-    const encrypted = new Uint8Array(await (await api('/api/reference-files/' + meta.id)).arrayBuffer());
-    if (await V.hash(encrypted) !== meta.id) throw new Error('Não foi possível verificar a imagem.');
-    const plain = await V.openBytes(key, encrypted, meta.iv, 'image');
-    if (operation !== generation || !key) return;
-    imageData.blob = new Blob([plain], { type: meta.mime }); showImage();
+  function renderImages() {
+    const gallery = $('ref-image-gallery'), collection = imageCollection;
+    gallery.replaceChildren();
+    $('ref-image-count').textContent = collection?.entries.length ? collection.entries.length + (collection.entries.length === 1 ? ' imagem' : ' imagens') : '';
+    if (!collection) return;
+    for (const entry of collection.entries) {
+      const card = document.createElement('figure'); card.className = 'ref-image-card';
+      const preview = document.createElement('button'); preview.type = 'button'; preview.className = 'ref-image-open'; preview.setAttribute('aria-label', 'Ampliar ' + (entry.meta.name || 'imagem'));
+      const img = document.createElement('img'); img.alt = entry.meta.name || 'Imagem da referência'; img.hidden = true;
+      const status = document.createElement('span'); status.textContent = 'Carregando imagem…'; preview.append(img, status);
+      const caption = document.createElement('figcaption'), name = document.createElement('span'); name.className = 'ref-image-name'; name.textContent = entry.meta.name || 'Imagem';
+      const actions = document.createElement('div'); actions.className = 'ref-image-actions';
+      const download = document.createElement('button'); download.type = 'button'; download.className = 'text-button'; download.textContent = 'Baixar';
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'text-button'; remove.textContent = 'Remover';
+      download.setAttribute('aria-label', 'Baixar ' + (entry.meta.name || 'imagem')); remove.setAttribute('aria-label', 'Remover ' + (entry.meta.name || 'imagem'));
+      actions.append(download, remove); caption.append(name, actions); card.append(preview, caption); gallery.append(card);
+      async function loadPreview() {
+        try {
+          const url = await collection.load(entry);
+          if (!url || collection !== imageCollection || !card.isConnected) return null;
+          img.src = url; img.hidden = false; status.hidden = true; return url;
+        } catch (error) {
+          if (collection === imageCollection && card.isConnected) { status.textContent = 'Clique para tentar novamente'; alert(error.message); }
+          return null;
+        }
+      }
+      preview.onclick = async () => {
+        const url = await loadPreview();
+        if (!url || collection !== imageCollection) return;
+        $('ref-image-full').src = url; $('ref-image-full').alt = entry.meta.name || 'Imagem da referência'; $('ref-image-dialog-title').textContent = entry.meta.name || 'Imagem'; $('ref-image-dialog').showModal();
+      };
+      download.onclick = async () => {
+        const url = await loadPreview(); if (!url) return;
+        const a = document.createElement('a'); a.href = url; a.download = entry.meta.name || 'imagem.png'; a.click();
+      };
+      remove.onclick = () => { if (busy || collection !== imageCollection) return; collection.remove(entry); markDirty(); renderImages(); };
+      void loadPreview();
+    }
   }
-  function showImage() {
-    revokeImage(); if (!imageData?.blob) return;
-    imageUrl = URL.createObjectURL(imageData.blob); $('ref-image-preview').src = imageUrl; $('ref-image-preview').hidden = false;
-    $('ref-image-name').textContent = imageData.meta.name; $('ref-download-image').hidden = false;
-  }
-  async function attachImage(file) {
-    if (!file || busy || !key || !current) return;
-    if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(file.type) || file.size > 8 * 1024 * 1024) { alert('Escolha PNG, JPG, WEBP ou GIF de até 8 MB.'); return; }
+  $('ref-image-dialog').addEventListener('close', () => $('ref-image-full').removeAttribute('src'));
+  async function attachImages(files) {
+    const selected = Array.from(files || []).filter(Boolean);
+    if (!selected.length || busy || !key || !current || !imageCollection) return;
     busy = true; $('ref-fields').disabled = true; alert();
+    const errors = []; let added = 0;
     try {
-      const bitmap = await createImageBitmap(file); bitmap.close();
-      const encrypted = await V.sealBytes(key, await file.arrayBuffer(), 'image');
-      imageData = { meta: { id: await V.hash(encrypted.data), iv: encrypted.iv, name: file.name || 'imagem.png', mime: file.type, size: file.size }, encrypted: encrypted.data, blob: file, uploaded: false };
-      if (!$('ref-title').value) $('ref-title').value = imageData.meta.name;
-      $('ref-kind').value = 'image'; changeKind(); showImage(); markDirty();
-    } catch { alert('Não foi possível ler essa imagem.'); }
+      for (const file of selected) {
+        try {
+          const entry = await imageCollection.attach(file); if (!entry) continue;
+          if (!$('ref-title').value) $('ref-title').value = entry.meta.name.slice(0, 150);
+          added++;
+        } catch (error) { errors.push((file.name || 'Imagem') + ': ' + (error.message || 'Não foi possível ler essa imagem.')); }
+      }
+      if (added) { markDirty(); renderImages(); }
+      if (errors.length) alert(errors.join(' '));
+    }
     finally { busy = false; $('ref-fields').disabled = false; }
   }
   $('ref-image-choose').onclick = () => { $('ref-image-file').value = ''; $('ref-image-file').click(); };
-  $('ref-image-file').onchange = e => attachImage(e.target.files[0]);
+  $('ref-image-file').onchange = e => attachImages(e.target.files);
   $('references-view').addEventListener('paste', e => {
     if (!key || !current || busy) return;
-    const image = Array.from(e.clipboardData?.items || []).find(item => item.type.startsWith('image/'));
-    if (image) { e.preventDefault(); attachImage(image.getAsFile()); }
+    const images = Array.from(e.clipboardData?.items || []).filter(item => item.type.startsWith('image/')).map(item => item.getAsFile()).filter(Boolean);
+    if (images.length) { e.preventDefault(); void attachImages(images); }
   });
   $('ref-image-choose').ondragover = e => e.preventDefault();
-  $('ref-image-choose').ondrop = e => { e.preventDefault(); attachImage(e.dataTransfer.files[0]); };
-  $('ref-download-image').onclick = async () => {
-    try { if (!imageData?.blob) await loadImage(); if (!imageUrl) return; const a = document.createElement('a'); a.href = imageUrl; a.download = imageData.meta.name; a.click(); }
-    catch (error) { alert(error.message); }
-  };
+  $('ref-image-choose').ondrop = e => { e.preventDefault(); void attachImages(e.dataTransfer.files); };
   $('ref-import-code').onclick = () => { $('ref-code-file').value = ''; $('ref-code-file').click(); };
   $('ref-code-file').onchange = async e => {
     const file = e.target.files[0]; if (!file || busy || !key || !current) return;
@@ -192,13 +224,11 @@
   async function save(asCopy = false) {
     if (busy || !key || !current) return false;
     let data; try { data = fields(); } catch (error) { alert(error.message); return false; }
-    if (data.kind === 'image' && !data.image) { alert('Adicione uma imagem.'); return false; }
+    if (data.kind === 'image' && !data.images.length) { alert('Adicione uma imagem.'); return false; }
     busy = true; $('ref-fields').disabled = true; $('ref-save').disabled = true; alert(); $('ref-save-status').textContent = 'Salvando…';
     try {
       if (asCopy) { current = { id: crypto.randomUUID(), revision: 0, data }; pending = null; }
-      if (imageData && !imageData.uploaded) {
-        await api('/api/reference-files/' + imageData.meta.id, { method: 'PUT', headers: { 'Content-Type': 'application/octet-stream' }, body: imageData.encrypted }); imageData.uploaded = true;
-      }
+      await imageCollection.uploadAll();
       // Reconcile an uncertain earlier attempt before constructing a new encrypted request.
       if (pending) { const accepted = await json('PUT', pending.body); current.revision = accepted.revision; pending = null; }
       const summary = { title: data.title, kind: data.kind, archived: data.archived, updatedAt: new Date().toISOString() };

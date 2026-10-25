@@ -8,7 +8,8 @@ Aplicativo local para organizar dailys, pendências e referências em uma interf
 - Tarefas com prioridade, prazo, busca e conclusão.
 - Referências para anotações, senhas, códigos, web.config e imagens.
 - Criptografia das referências com senha mestra.
-- Upload e colagem de imagens; importação de arquivos de texto e configuração.
+- Até 20 imagens por referência, com upload múltiplo, colagem, visualização ampliada, download e remoção individual (até 8 MB por imagem).
+- Importação de arquivos de texto e configuração.
 - Temas claro e escuro com destaques azuis.
 - Exportação e restauração de dailys e tarefas em JSON.
 
