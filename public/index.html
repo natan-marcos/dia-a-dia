@@ -13,7 +13,7 @@
   <script src="core.js?v=sqlite1" defer></script><script src="sync.js?v=local1" defer></script>
   <script src="app.js?v=local1" defer></script>
   <script src="reference-crypto.js?v=1" defer></script>
-  <script src="references.js?v=1" defer></script>
+  <script src="references.js?v=2" defer></script>
   <script src="presence.js?v=1" defer></script>
 </head>
 <body>
@@ -81,7 +81,7 @@
         <div id="ref-unlock-panel" class="panel ref-unlock">
           <span class="section-icon"><svg><use href="#i-lock"/></svg></span><h2 id="ref-unlock-title">Carregando…</h2>
           <p id="ref-unlock-description">Anotações, senhas, códigos, configurações e imagens.</p>
-          <form id="ref-unlock-form" hidden><label class="form-label" for="ref-master">Senha mestra</label><input type="password" id="ref-master" required autocomplete="current-password" maxlength="256"><div id="ref-confirm-group" hidden><label class="form-label" for="ref-master-confirm">Confirmar senha mestra</label><input type="password" id="ref-master-confirm" autocomplete="new-password" maxlength="256"><p class="ref-help">Use pelo menos 12 caracteres. Guarde esta senha: sem ela, não será possível abrir suas referências.</p></div><button class="button primary" id="ref-unlock-submit" type="submit">Desbloquear</button></form>
+          <form id="ref-unlock-form" hidden><label class="form-label" for="ref-master">Senha mestra</label><input type="password" id="ref-master" required autocomplete="current-password" maxlength="256"><div id="ref-confirm-group" hidden><label class="form-label" for="ref-master-confirm">Confirmar senha mestra</label><input type="password" id="ref-master-confirm" autocomplete="new-password" maxlength="256"><p class="ref-help">Use pelo menos 8 caracteres. Guarde esta senha: sem ela, não será possível abrir suas referências.</p></div><button class="button primary" id="ref-unlock-submit" type="submit">Desbloquear</button></form>
           <button class="button" id="ref-load-retry" hidden>Tentar novamente</button>
         </div>
         <div id="ref-workspace" class="ref-workspace" hidden>

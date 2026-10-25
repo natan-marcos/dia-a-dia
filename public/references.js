@@ -34,7 +34,7 @@
       $('ref-unlock-title').textContent = config.exists ? 'Desbloquear referências' : 'Proteger referências';
       $('ref-unlock-description').textContent = config.exists ? 'Digite sua senha mestra.' : 'Crie uma senha mestra para proteger o conteúdo desta aba.';
       $('ref-confirm-group').hidden = config.exists; $('ref-master-confirm').required = !config.exists;
-      $('ref-master').minLength = config.exists ? 1 : 12; $('ref-master').autocomplete = config.exists ? 'current-password' : 'new-password';
+      $('ref-master').minLength = config.exists ? 1 : 8; $('ref-master').autocomplete = config.exists ? 'current-password' : 'new-password';
       $('ref-unlock-submit').textContent = config.exists ? 'Desbloquear' : 'Criar e abrir'; $('ref-unlock-form').hidden = false;
     } catch (error) { alert(error.message); $('ref-unlock-title').textContent = 'Referências indisponíveis'; $('ref-load-retry').hidden = false; }
     finally { loading = false; }
@@ -46,7 +46,7 @@
   $('ref-unlock-form').onsubmit = async e => {
     e.preventDefault(); if (busy || !config) return;
     const password = $('ref-master').value;
-    if (!config.exists && (password.length < 12 || password !== $('ref-master-confirm').value)) { alert('Use pelo menos 12 caracteres e confirme a mesma senha.'); return; }
+    if (!config.exists && (password.length < 8 || password !== $('ref-master-confirm').value)) { alert('Use pelo menos 8 caracteres e confirme a mesma senha.'); return; }
     busy = true; $('ref-unlock-submit').disabled = true; alert();
     try {
       const salt = config.exists ? config.salt : V.newSalt();
