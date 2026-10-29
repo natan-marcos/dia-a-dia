@@ -104,7 +104,7 @@
   $('copy-daily').onclick = async () => {
     const text = $('daily-notes').value;
     if (!text.trim()) { toast('Escreva sua daily antes de copiar.'); $('daily-notes').focus(); return; }
-    const contents = `Daily · ${longDate(selectedDate)}\n\n${text}`;
+    const contents = `Daily ${selectedDate.slice(8, 10)}/${selectedDate.slice(5, 7)}/${selectedDate.slice(0, 4)}\n\n${text}`;
     try { await navigator.clipboard.writeText(contents); toast('Daily copiada.'); }
     catch { download(contents, `daily-${selectedDate}.txt`, 'text/plain;charset=utf-8'); toast('Não foi possível copiar. Baixamos sua daily em TXT.'); }
   };
